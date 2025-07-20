@@ -3,7 +3,7 @@
 
 import Foundation
 
-@attached(extension, conformances: JSONSchemaGenerator, names: named(generateOpenAISchema), named(generateOpenAISchemaString))
+@attached(extension, conformances: JSONSchemaGenerator, Decodable, names: named(generateOpenAISchema), named(generateOpenAISchemaString), named(create))
 public macro AutoSchema(name: String? = nil, strict: Bool = true) = #externalMacro(module: "AIDescriptionMacros", type: "AutoSchemaMacro")
 
 @attached(peer)
@@ -12,4 +12,5 @@ public macro SchemaField(description: String? = nil, example: String? = nil, isR
 public protocol JSONSchemaGenerator {
     static func generateOpenAISchema() -> [String: Any]
     static func generateOpenAISchemaString() -> String
+    static func create(from json: String) throws -> Self
 }

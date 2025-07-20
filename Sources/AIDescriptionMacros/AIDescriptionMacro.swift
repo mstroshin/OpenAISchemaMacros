@@ -45,12 +45,17 @@ public struct AutoSchemaMacro: ExtensionMacro {
             strict = true // default value
         }
         
-        // Get all stored properties
+        // Get all stored properties (exclude computed properties)
         let storedProperties = structDecl.memberBlock.members.compactMap { member -> (String, TypeSyntax, SchemaFieldInfo)? in
             guard let varDecl = member.decl.as(VariableDeclSyntax.self),
                   let binding = varDecl.bindings.first,
                   let identifier = binding.pattern.as(IdentifierPatternSyntax.self),
                   let type = binding.typeAnnotation?.type else {
+                return nil
+            }
+            
+            // Skip computed properties (properties with getter/setter but no stored value)
+            if binding.accessorBlock != nil {
                 return nil
             }
             
@@ -76,7 +81,7 @@ public struct AutoSchemaMacro: ExtensionMacro {
         let basicSchemaPropertiesCode = generateBasicSchemaProperties(from: storedProperties)
         
         let extensionDecl = try ExtensionDeclSyntax(
-            "extension \(type.trimmed): JSONSchemaGenerator"
+            "extension \(type.trimmed): JSONSchemaGenerator, Decodable"
         ) {
             DeclSyntax(
                 """
@@ -106,7 +111,7 @@ public struct AutoSchemaMacro: ExtensionMacro {
                         "schema": [
                             "type": "object",
                             "properties": [
-                \(raw: basicSchemaPropertiesCode)
+                                \(raw: basicSchemaPropertiesCode)
                             ],
                             "required": [\(raw: generateRequiredFields(from: storedProperties))],
                             "additionalProperties": false
@@ -119,6 +124,25 @@ public struct AutoSchemaMacro: ExtensionMacro {
                     } catch {
                         return "{}"
                     }
+                }
+                """
+            )
+            
+            DeclSyntax(
+                """
+                static func create(from json: String) throws -> Self {
+                    guard let jsonData = json.data(using: .utf8) else {
+                        throw DecodingError.dataCorrupted(
+                            DecodingError.Context(
+                                codingPath: [],
+                                debugDescription: "Invalid JSON string encoding"
+                            )
+                        )
+                    }
+                    
+                    let decoder = JSONDecoder()
+                    decoder.dateDecodingStrategy = .iso8601
+                    return try decoder.decode(Self.self, from: jsonData)
                 }
                 """
             )
