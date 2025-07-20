@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:AIDescription}",
+            "name": "Debug AIDescriptionClient",
+            "program": "${workspaceFolder:AIDescription}/.build/debug/AIDescriptionClient",
+            "preLaunchTask": "swift: Build Debug AIDescriptionClient"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:AIDescription}",
+            "name": "Release AIDescriptionClient",
+            "program": "${workspaceFolder:AIDescription}/.build/release/AIDescriptionClient",
+            "preLaunchTask": "swift: Build Release AIDescriptionClient"
+        }
+    ]
+}
