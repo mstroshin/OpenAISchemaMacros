@@ -79,4 +79,15 @@ let generatedPerson = """
 """
 
 let person = try? Person.create(from: generatedPerson)
-print(person)
+print(person ?? "Failed to decode Person")
+
+@SchemaEnum()
+enum TaskModelCategory: String, CaseIterable, Codable {
+    case all = "Все"
+    case work = "Работа"
+    case personal = "Личное"
+    case health = "Здоровье"
+}
+
+print(TaskModelCategory.allCases)
+print(TaskModelCategory.all.rawValue)

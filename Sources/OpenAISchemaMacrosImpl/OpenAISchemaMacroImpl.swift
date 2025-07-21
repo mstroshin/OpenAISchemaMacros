@@ -35,7 +35,7 @@ public struct AutoSchemaMacro: ExtensionMacro {
         // Check which protocols are already implemented to avoid redundant conformances
         // Check both the conformingTo protocols parameter and the struct's inheritance clause
         let providedProtocols = Set(protocols.map { $0.trimmed.description })
-        let inheritanceProtocols = getExistingProtocols(from: structDecl)
+        let inheritanceProtocols = Self.getExistingProtocols(from: structDecl)
         let allExistingProtocols = providedProtocols.union(inheritanceProtocols)
         
         let needsJSONSchemaGenerator = !allExistingProtocols.contains("JSONSchemaGenerator")
@@ -53,7 +53,7 @@ public struct AutoSchemaMacro: ExtensionMacro {
         let conformanceString = conformanceList.isEmpty ? "" : ": " + conformanceList.joined(separator: ", ")
         
         // Generate the complete extension with all required methods
-        let extensionDecl = try DeclSyntax("""
+        let extensionDecl = DeclSyntax("""
             extension \(type.trimmed)\(raw: conformanceString) {
                 
                 /// Generates OpenAI-compatible JSON Schema as a dictionary
@@ -115,6 +115,29 @@ public struct AutoSchemaMacro: ExtensionMacro {
         }
         
         return [extensionDecl]
+    }
+    
+    /// Helper function to extract existing protocol conformances from a declaration's inheritance clause
+    /// 
+    /// Analyzes the inheritance clause of struct/enum declarations to find already implemented protocols.
+    /// This prevents redundant conformance errors when generating extensions.
+    /// 
+    /// - Parameter declaration: The struct or enum declaration to analyze
+    /// - Returns: Set of protocol names that the type already conforms to
+    private static func getExistingProtocols(from declaration: some DeclGroupSyntax) -> Set<String> {
+        var protocols = Set<String>()
+        
+        // Check inheritance clause for existing conformances
+        if let inheritanceClause = declaration.inheritanceClause {
+            for inheritedType in inheritanceClause.inheritedTypes {
+                let typeName = inheritedType.type.trimmed.description
+                // Add the type name to protocols set
+                // This includes both protocols and base types, but for our purposes that's fine
+                protocols.insert(typeName)
+            }
+        }
+        
+        return protocols
     }
     
     /// Extracts all stored properties from a struct declaration
@@ -439,12 +462,21 @@ public struct SchemaEnumMacro: ExtensionMacro {
         
         // Check which protocols are already implemented to avoid redundant conformances
         // Check both the conformingTo protocols parameter and the enum's inheritance clause
+        // Note: RawRepresentable is auto-synthesized by Swift, so we only check inheritance clause for it
         let providedProtocols = Set(protocols.map { $0.trimmed.description })
-        let inheritanceProtocols = getExistingProtocols(from: enumDecl)
+        let inheritanceProtocols = Self.getExistingProtocols(from: enumDecl)
+        
+        // For CaseIterable, check both sources
         let allExistingProtocols = providedProtocols.union(inheritanceProtocols)
         
+        // For RawRepresentable, only check inheritance clause (since it's auto-synthesized)
+        let inheritanceOnlyProtocols = inheritanceProtocols
+        
         let needsCaseIterable = !allExistingProtocols.contains("CaseIterable")
-        let needsRawRepresentable = !allExistingProtocols.contains("RawRepresentable")
+        
+        // Only add RawRepresentable if enum has a raw type and doesn't already conform to it in source code
+        let hasRawType = Self.enumHasRawType(enumDecl)
+        let needsRawRepresentable = hasRawType && !inheritanceOnlyProtocols.contains("RawRepresentable")
         
         // Build conformance list only for missing protocols to prevent compilation errors
         var conformanceList: [String] = []
@@ -457,7 +489,7 @@ public struct SchemaEnumMacro: ExtensionMacro {
         
         let conformanceString = conformanceList.isEmpty ? "" : ": " + conformanceList.joined(separator: ", ")
         
-        let extensionDecl = try DeclSyntax("""
+        let extensionDecl = DeclSyntax("""
             extension \(type.trimmed)\(raw: conformanceString) {
                 
                 /// Generates JSON Schema for this enum type
@@ -511,29 +543,60 @@ public struct SchemaEnumMacro: ExtensionMacro {
         
         return cases
     }
-}
-
-/// Helper function to extract existing protocol conformances from a declaration's inheritance clause
-/// 
-/// Analyzes the inheritance clause of struct/enum declarations to find already implemented protocols.
-/// This prevents redundant conformance errors when generating extensions.
-/// 
-/// - Parameter declaration: The struct or enum declaration to analyze
-/// - Returns: Set of protocol names that the type already conforms to
-private func getExistingProtocols(from declaration: some DeclGroupSyntax) -> Set<String> {
-    var protocols = Set<String>()
     
-    // Check inheritance clause for existing conformances
-    if let inheritanceClause = declaration.inheritanceClause {
+    /// Helper function to check if an enum has a raw type defined
+    /// 
+    /// Analyzes the enum's inheritance clause to determine if it has a raw type
+    /// (like String, Int, etc.) that would make it conform to RawRepresentable.
+    /// 
+    /// - Parameter enumDecl: The enum declaration to analyze
+    /// - Returns: true if enum has a raw type, false otherwise
+    private static func enumHasRawType(_ enumDecl: EnumDeclSyntax) -> Bool {
+        guard let inheritanceClause = enumDecl.inheritanceClause else {
+            return false
+        }
+        
+        // Check if any inherited type is a potential raw type
         for inheritedType in inheritanceClause.inheritedTypes {
             let typeName = inheritedType.type.trimmed.description
-            // Add the type name to protocols set
-            // This includes both protocols and base types, but for our purposes that's fine
-            protocols.insert(typeName)
+            
+            // Common raw types for enums
+            switch typeName {
+            case "String", "Int", "Int8", "Int16", "Int32", "Int64",
+                 "UInt", "UInt8", "UInt16", "UInt32", "UInt64",
+                 "Float", "Double", "Character":
+                return true
+            default:
+                // Skip protocol names like CaseIterable, Equatable, etc.
+                continue
+            }
         }
+        
+        return false
     }
     
-    return protocols
+    /// Helper function to extract existing protocol conformances from a declaration's inheritance clause
+    /// 
+    /// Analyzes the inheritance clause of struct/enum declarations to find already implemented protocols.
+    /// This prevents redundant conformance errors when generating extensions.
+    /// 
+    /// - Parameter declaration: The struct or enum declaration to analyze
+    /// - Returns: Set of protocol names that the type already conforms to
+    private static func getExistingProtocols(from declaration: some DeclGroupSyntax) -> Set<String> {
+        var protocols = Set<String>()
+        
+        // Check inheritance clause for existing conformances
+        if let inheritanceClause = declaration.inheritanceClause {
+            for inheritedType in inheritanceClause.inheritedTypes {
+                let typeName = inheritedType.type.trimmed.description
+                // Add the type name to protocols set
+                // This includes both protocols and base types, but for our purposes that's fine
+                protocols.insert(typeName)
+            }
+        }
+        
+        return protocols
+    }
 }
 
 /// Data structure for storing @SchemaField attribute parameters
