@@ -35,7 +35,7 @@ public struct AutoSchemaMacro: ExtensionMacro {
         // Check which protocols are already implemented to avoid redundant conformances
         let existingProtocols = Set(protocols.map { $0.trimmed.description })
         let needsJSONSchemaGenerator = !existingProtocols.contains("JSONSchemaGenerator")
-        let needsDecodable = !existingProtocols.contains("Decodable")
+        let needsDecodable = !existingProtocols.contains("Decodable") || !existingProtocols.contains("Codable")
         
         // Build conformance list only for missing protocols to prevent compilation errors
         var conformanceList: [String] = []
