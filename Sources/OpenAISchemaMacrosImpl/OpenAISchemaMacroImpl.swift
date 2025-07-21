@@ -513,7 +513,7 @@ enum MacroError: Error, CustomStringConvertible {
 /// Registers all macro implementations with the Swift compiler
 /// so they can be used with their respective attributes.
 @main
-struct AIDescriptionPlugin: CompilerPlugin {
+struct OpenAISchemaMacrosPlugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
         AutoSchemaMacro.self,      // @SchemaObject()
         SchemaFieldMacro.self,     // @SchemaField(...)

@@ -1,4 +1,4 @@
-import AIDescription
+import OpenAISchemaMacros
 import Foundation
 
 @SchemaObject()

@@ -40,7 +40,7 @@ import Foundation
 /// }
 /// ```
 @attached(extension, conformances: JSONSchemaGenerator, Decodable, names: named(generateOpenAISchema), named(generateOpenAISchemaString), named(create))
-public macro SchemaObject() = #externalMacro(module: "AIDescriptionMacros", type: "AutoSchemaMacro")
+public macro SchemaObject() = #externalMacro(module: "OpenAISchemaMacrosImpl", type: "AutoSchemaMacro")
 
 /// Macro for defining schema properties with validation and metadata
 ///
@@ -101,7 +101,7 @@ public macro SchemaField(
     pattern: String? = nil,
     format: String? = nil,
     example: String? = nil
-) = #externalMacro(module: "AIDescriptionMacros", type: "SchemaFieldMacro")
+) = #externalMacro(module: "OpenAISchemaMacrosImpl", type: "SchemaFieldMacro")
 
 /// Macro for creating enum schemas compatible with OpenAI Structured Outputs
 ///
@@ -153,7 +153,7 @@ public macro SchemaField(
 /// }
 /// ```
 @attached(extension, conformances: CaseIterable, RawRepresentable, names: named(generateEnumSchema))
-public macro SchemaEnum() = #externalMacro(module: "AIDescriptionMacros", type: "SchemaEnumMacro")
+public macro SchemaEnum() = #externalMacro(module: "OpenAISchemaMacrosImpl", type: "SchemaEnumMacro")
 
 /// Protocol for objects that can generate JSON Schema
 ///
