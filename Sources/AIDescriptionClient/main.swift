@@ -1,7 +1,7 @@
 import AIDescription
 import Foundation
 
-@AutoSchema(name: "Person", strict: false)
+@SchemaObject()
 struct Person {
     @SchemaField(description: "Full name of the person")
     let name: String
@@ -9,26 +9,74 @@ struct Person {
     @SchemaField(description: "Age in years")
     let age: Int
     
-    @SchemaField(description: "Email address", isRequired: false)
+    @SchemaField(description: "Email address")
     let email: String?
+
+    @SchemaField(description: "Work of the person")
+    let work: Work
+    
+    @SchemaField(description: "List of skills")
+    let skills: [Skill]
 }
 
-// Example usage of create(from json:) function
-let jsonString = """
+@SchemaObject()
+struct Work {
+    @SchemaField(description: "Title of the work")
+    let title: String
+    
+    @SchemaField(description: "Company name")
+    let company: String
+}
+
+@SchemaObject()
+struct Skill {
+    @SchemaField(description: "Name of the skill")
+    let name: String
+    
+    @SchemaField(description: "Proficiency level from 1 to 10", minimum: 1, maximum: 10)
+    let level: Int
+}
+
+print("=== Person Schema with nested objects ===")
+print(Person.generateOpenAISchemaString())
+print()
+
+print("=== Individual Work Schema ===")
+print(Work.generateOpenAISchemaString())
+print()
+
+print("=== Individual Skill Schema ===")
+print(Skill.generateOpenAISchemaString())
+
+let generatedPerson = """
 {
-    "name": "John Doe",
-    "age": 30,
-    "email": "john@example.com"
+  "name": "Алексей Смирнов",
+  "age": 32,
+  "email": "alexey.smirnov@example.com",
+  "skills": [
+    {
+      "name": "Python",
+      "level": 8
+    },
+    {
+      "name": "Аналитика данных",
+      "level": 7
+    },
+    {
+      "name": "SQL",
+      "level": 7
+    },
+    {
+      "name": "Machine Learning",
+      "level": 6
+    }
+  ],
+  "work": {
+    "company": "DataTech Solutions",
+    "title": "Data Scientist"
+  }
 }
 """
 
-do {
-    let person = try Person.create(from: jsonString)
-    print("Created person: \(person.name), age \(person.age)")
-    if let email = person.email {
-        print("Email: \(email)")
-    }
-} catch {
-    print("Failed to create person: \(error)")
-}
-
+let person = try? Person.create(from: generatedPerson)
+print(person)
