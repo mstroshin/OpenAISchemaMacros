@@ -17,6 +17,24 @@
             "name": "Release AIDescriptionClient",
             "program": "${workspaceFolder:AIDescription}/.build/release/AIDescriptionClient",
             "preLaunchTask": "swift: Build Release AIDescriptionClient"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:OpenAISchemaMacros}",
+            "name": "Debug OpenAISchemaMacrosClient",
+            "program": "${workspaceFolder:OpenAISchemaMacros}/.build/debug/OpenAISchemaMacrosClient",
+            "preLaunchTask": "swift: Build Debug OpenAISchemaMacrosClient"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:OpenAISchemaMacros}",
+            "name": "Release OpenAISchemaMacrosClient",
+            "program": "${workspaceFolder:OpenAISchemaMacros}/.build/release/OpenAISchemaMacrosClient",
+            "preLaunchTask": "swift: Build Release OpenAISchemaMacrosClient"
         }
     ]
 }
