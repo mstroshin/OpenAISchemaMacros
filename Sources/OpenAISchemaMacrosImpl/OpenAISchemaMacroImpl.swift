@@ -88,6 +88,21 @@ public struct AutoSchemaMacro: ExtensionMacro {
                     }
                 }
                 
+                /// Generates OpenAI TextConfig for Responses API
+                /// 
+                /// Returns a ready-to-use TextConfig that can be directly used in OpenAI Responses API calls.
+                /// This method simplifies the process of creating structured API requests.
+                /// 
+                /// - Returns: TextConfig configured with this type's schema
+                static func generateOpenAITextConfig() -> TextConfig {
+                    let schema = Schema(
+                        name: "\(type.trimmed)",
+                        schema: generateOpenAISchema(),
+                        strict: false
+                    )
+                    return TextConfig(format: TextFormat(schema: schema))
+                }
+                
                 /// Creates an instance from JSON string using standard JSONDecoder
                 /// 
                 /// This method uses JSONDecoder with ISO8601 date decoding strategy

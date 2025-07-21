@@ -39,7 +39,7 @@ import Foundation
 ///   "additionalProperties": false
 /// }
 /// ```
-@attached(extension, conformances: JSONSchemaGenerator, Decodable, names: named(generateOpenAISchema), named(generateOpenAISchemaString), named(create))
+@attached(extension, conformances: JSONSchemaGenerator, Decodable, names: named(generateOpenAISchema), named(generateOpenAISchemaString), named(generateOpenAITextConfig), named(create))
 public macro SchemaObject() = #externalMacro(module: "OpenAISchemaMacrosImpl", type: "AutoSchemaMacro")
 
 /// Macro for defining schema properties with validation and metadata
@@ -167,6 +167,10 @@ public protocol JSONSchemaGenerator {
     /// Generates JSON Schema as a JSON string
     /// - Returns: Pretty-printed JSON string of the schema
     static func generateOpenAISchemaString() -> String
+    
+    /// Generates OpenAI TextConfig for Responses API
+    /// - Returns: Ready-to-use TextConfig for API requests
+    static func generateOpenAITextConfig() -> TextConfig
     
     /// Creates an instance from JSON string
     /// - Parameter jsonString: JSON string to decode
