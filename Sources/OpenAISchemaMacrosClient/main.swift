@@ -2,7 +2,7 @@ import OpenAISchemaMacros
 import Foundation
 
 @SchemaObject()
-struct Person {
+struct Person: Codable {
     @SchemaField(description: "Full name of the person")
     let name: String
     
@@ -20,7 +20,7 @@ struct Person {
 }
 
 @SchemaObject()
-struct Work {
+struct Work: Codable {
     @SchemaField(description: "Title of the work")
     let title: String
     
@@ -29,7 +29,7 @@ struct Work {
 }
 
 @SchemaObject()
-struct Skill {
+struct Skill: Codable {
     @SchemaField(description: "Name of the skill")
     let name: String
     
