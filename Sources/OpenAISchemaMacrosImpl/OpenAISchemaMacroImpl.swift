@@ -32,9 +32,25 @@ public struct AutoSchemaMacro: ExtensionMacro {
         // Extract all stored properties (exclude computed properties and methods)
         let properties = try extractStoredProperties(from: structDecl)
         
+        // Check which protocols are already implemented to avoid redundant conformances
+        let existingProtocols = Set(protocols.map { $0.trimmed.description })
+        let needsJSONSchemaGenerator = !existingProtocols.contains("JSONSchemaGenerator")
+        let needsDecodable = !existingProtocols.contains("Decodable")
+        
+        // Build conformance list only for missing protocols to prevent compilation errors
+        var conformanceList: [String] = []
+        if needsJSONSchemaGenerator {
+            conformanceList.append("JSONSchemaGenerator")
+        }
+        if needsDecodable {
+            conformanceList.append("Decodable")
+        }
+        
+        let conformanceString = conformanceList.isEmpty ? "" : ": " + conformanceList.joined(separator: ", ")
+        
         // Generate the complete extension with all required methods
         let extensionDecl = try DeclSyntax("""
-            extension \(type.trimmed): JSONSchemaGenerator, Decodable {
+            extension \(type.trimmed)\(raw: conformanceString) {
                 
                 /// Generates OpenAI-compatible JSON Schema as a dictionary
                 /// 
@@ -417,8 +433,24 @@ public struct SchemaEnumMacro: ExtensionMacro {
         // Extract all enum cases and their raw values
         let enumCases = try extractEnumCases(from: enumDecl)
         
+        // Check which protocols are already implemented to avoid redundant conformances
+        let existingProtocols = Set(protocols.map { $0.trimmed.description })
+        let needsCaseIterable = !existingProtocols.contains("CaseIterable")
+        let needsRawRepresentable = !existingProtocols.contains("RawRepresentable")
+        
+        // Build conformance list only for missing protocols to prevent compilation errors
+        var conformanceList: [String] = []
+        if needsCaseIterable {
+            conformanceList.append("CaseIterable")
+        }
+        if needsRawRepresentable {
+            conformanceList.append("RawRepresentable")
+        }
+        
+        let conformanceString = conformanceList.isEmpty ? "" : ": " + conformanceList.joined(separator: ", ")
+        
         let extensionDecl = try DeclSyntax("""
-            extension \(type.trimmed): CaseIterable, RawRepresentable {
+            extension \(type.trimmed)\(raw: conformanceString) {
                 
                 /// Generates JSON Schema for this enum type
                 /// 
